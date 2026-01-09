@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 import User from "../models/User";
 import { hashPassword, comparePassword } from "../utils/hashPassword";
 import { generateOTP } from "../utils/generateOtp";
 import { sendEmail } from "../utils/sendEmail";
+import { generateResetToken } from "../utils/generateResetToken";
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -95,4 +97,60 @@ export const verifyOtp = async (req: Request, res: Response) => {
   await user.save();
 
   res.json({ message: "Email verified successfully" });
+};
+
+// FORGOT PASSWORD
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const { token, hashedToken } = generateResetToken();
+
+  user.resetPasswordToken = hashedToken;
+  user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+
+  await user.save();
+
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+  await sendEmail(
+    email,
+    "Reset your password",
+    `
+  <h2>Password Reset</h2>
+  <a href="${resetLink}">${resetLink}</a>
+  <p>This link expires in 15 minutes</p>
+  `
+  );
+
+  res.json({ message: "Password reset link sent to email" });
+};
+
+// RESET PASSWORD
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: "Invalid or expired token" });
+  }
+
+  user.password = await hashPassword(password);
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+
+  await user.save();
+
+  res.json({ message: "Password reset successful" });
 };
