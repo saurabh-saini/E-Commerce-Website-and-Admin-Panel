@@ -11,28 +11,26 @@ import { generateResetToken } from "../utils/generateResetToken";
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
 
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: "User already exists" });
   }
 
   const hashedPassword = await hashPassword(password);
-  const otp = generateOTP();
 
-  const user = await User.create({
+  await User.create({
     name,
     email,
     password: hashedPassword,
-    otpExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 min
-    otp,
-    isVerified: false,
+    isVerified: true, // ✅ DIRECT VERIFIED
   });
 
-  await sendEmail(email, otp);
-
   res.status(201).json({
-    message: "OTP sent to email. Please verify.",
-    userId: user._id,
+    message: "Registration successful. Please login.",
   });
 };
 
@@ -43,10 +41,6 @@ export const login = async (req: Request, res: Response) => {
   const user = await User.findOne({ email });
   if (!user) {
     return res.status(404).json({ message: "User not found" });
-  }
-
-  if (!user.isVerified) {
-    return res.status(403).json({ message: "Please verify your email first" });
   }
 
   const isMatch = await comparePassword(password, user.password);
@@ -72,33 +66,6 @@ export const login = async (req: Request, res: Response) => {
   });
 };
 
-// VERYFY OTP
-export const verifyOtp = async (req: Request, res: Response) => {
-  const { email, otp } = req.body;
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  if (user.otp !== otp) {
-    return res.status(400).json({ message: "Invalid OTP" });
-  }
-
-  if (!user.otpExpires || user.otpExpires < new Date()) {
-    return res.status(400).json({ message: "OTP expired" });
-  }
-
-  user.isVerified = true;
-  user.otp = undefined;
-  user.otpExpires = undefined;
-
-  await user.save();
-
-  res.json({ message: "Email verified successfully" });
-};
-
 // FORGOT PASSWORD
 export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
@@ -108,49 +75,57 @@ export const forgotPassword = async (req: Request, res: Response) => {
     return res.status(404).json({ message: "User not found" });
   }
 
-  const { token, hashedToken } = generateResetToken();
+  const otp = generateOTP();
 
-  user.resetPasswordToken = hashedToken;
-  user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
-
+  user.otp = otp;
+  user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
   await user.save();
-
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
   await sendEmail(
     email,
-    "Reset your password",
-    `
-  <h2>Password Reset</h2>
-  <a href="${resetLink}">${resetLink}</a>
-  <p>This link expires in 15 minutes</p>
-  `
+    "Password Reset OTP",
+    `<h3>Your OTP is: ${otp}</h3><p>Valid for 10 minutes</p>`
   );
 
-  res.json({ message: "Password reset link sent to email" });
+  res.json({ message: "OTP sent to email" });
+};
+
+// VERYFY OTP
+export const verifyOtp = async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  if (!user.otp || user.otp !== otp) {
+    return res.status(400).json({ message: "Invalid OTP" });
+  }
+
+  if (!user.otpExpires || user.otpExpires < new Date()) {
+    return res.status(400).json({ message: "OTP expired" });
+  }
+
+  // OTP verified → allow reset password
+  user.otp = undefined;
+  user.otpExpires = undefined;
+  await user.save();
+
+  res.json({ message: "OTP verified. Proceed to reset password." });
 };
 
 // RESET PASSWORD
 export const resetPassword = async (req: Request, res: Response) => {
-  const { token } = req.params;
-  const { password } = req.body;
+  const { email, password } = req.body;
 
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-  const user = await User.findOne({
-    resetPasswordToken: hashedToken,
-    resetPasswordExpires: { $gt: new Date() },
-  });
-
+  const user = await User.findOne({ email });
   if (!user) {
-    return res.status(400).json({ message: "Invalid or expired token" });
+    return res.status(404).json({ message: "User not found" });
   }
 
   user.password = await hashPassword(password);
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
-
   await user.save();
 
-  res.json({ message: "Password reset successful" });
+  res.json({ message: "Password reset successful. Please login." });
 };
