@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AuthLayout from "../components/AuthLayout";
+import AuthLayout from "../../components/AuthLayout";
 import { Link } from "react-router-dom";
 import OtpInput from "react-otp-input";
 
