@@ -1,4 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
+
+/* ---------------- TYPES ---------------- */
 
 type User = {
   id: string;
@@ -13,11 +16,15 @@ type AuthState = {
   isAuthenticated: boolean;
 };
 
+/* ---------------- INITIAL STATE ---------------- */
+
 const initialState: AuthState = {
   user: JSON.parse(localStorage.getItem("user") || "null"),
   token: localStorage.getItem("token"),
   isAuthenticated: !!localStorage.getItem("token"),
 };
+
+/* ---------------- SLICE ---------------- */
 
 const authSlice = createSlice({
   name: "auth",
@@ -25,14 +32,13 @@ const authSlice = createSlice({
   reducers: {
     loginSuccess: (
       state,
-      action: {
-        payload: { user: User; token: string };
-      }
+      action: PayloadAction<{ user: User; token: string }>
     ) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
 
+      // Persist auth
       localStorage.setItem("token", action.payload.token);
       localStorage.setItem("user", JSON.stringify(action.payload.user));
     },
@@ -47,6 +53,8 @@ const authSlice = createSlice({
     },
   },
 });
+
+/* ---------------- EXPORTS ---------------- */
 
 export const { loginSuccess, logout } = authSlice.actions;
 export default authSlice.reducer;
