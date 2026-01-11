@@ -8,7 +8,11 @@ import api from "../../services/api";
 import AuthLayout from "../../components/AuthLayout";
 import FormError from "../../components/FormError";
 import Spinner from "../../components/Spinner";
+import { handleApiError } from "../../utils/handleApiError";
 
+/* ----------------------------------
+   Form fields type (React Hook Form)
+----------------------------------- */
 type RegisterForm = {
   name: string;
   email: string;
@@ -16,29 +20,51 @@ type RegisterForm = {
 };
 
 export default function Register() {
-  const [showPassword, setShowPassword] = useState(false);
+  /* -------------------------------
+     UI State: show / hide password
+     (explicit boolean for clarity)
+  -------------------------------- */
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  /* -------------------------------
+     Router helper
+  -------------------------------- */
   const navigate = useNavigate();
 
+  /* -------------------------------
+     React Hook Form setup
+  -------------------------------- */
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterForm>();
 
+  /* -------------------------------
+     Submit handler
+  -------------------------------- */
   const onSubmit = async (data: RegisterForm) => {
     try {
+      // Call register API
       const res = await api.post("/auth/register", data);
+
       toast.success(res.data.message || "Registered successfully");
+
+      // Redirect to login after successful registration
       navigate("/login");
-    } catch {
-      // global axios interceptor handles error toast
+    } catch (error) {
+      // Errors are handled globally via axios interceptor
+      handleApiError(error);
     }
   };
 
+  /* -------------------------------
+     UI
+  -------------------------------- */
   return (
     <AuthLayout title="Create Account">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Name */}
+        {/* -------- Name -------- */}
         <div>
           <input
             {...register("name", { required: "Name is required" })}
@@ -50,7 +76,7 @@ export default function Register() {
           <FormError message={errors.name?.message} />
         </div>
 
-        {/* Email */}
+        {/* -------- Email -------- */}
         <div>
           <input
             {...register("email", {
@@ -69,7 +95,7 @@ export default function Register() {
           <FormError message={errors.email?.message} />
         </div>
 
-        {/* Password with Eye */}
+        {/* -------- Password (with toggle eye) -------- */}
         <div className="relative">
           <input
             {...register("password", {
@@ -86,10 +112,11 @@ export default function Register() {
                        focus:border-blue-500"
           />
 
+          {/* Toggle password visibility */}
           <button
             type="button"
             aria-label={showPassword ? "Hide password" : "Show password"}
-            onClick={() => setShowPassword(!showPassword)}
+            onClick={() => setShowPassword((prev) => !prev)}
             className="absolute right-3 top-1/2 -translate-y-1/2
                        text-gray-500 hover:text-gray-700
                        cursor-pointer focus:outline-none"
@@ -100,10 +127,11 @@ export default function Register() {
           <FormError message={errors.password?.message} />
         </div>
 
-        {/* Submit Button */}
+        {/* -------- Submit Button -------- */}
         <button
           disabled={isSubmitting}
-          className={`w-full py-2 rounded text-white flex items-center justify-center gap-2 transition
+          className={`w-full py-2 rounded text-white
+            flex items-center justify-center gap-2 transition
             ${
               isSubmitting
                 ? "bg-blue-400 opacity-70 cursor-not-allowed"
@@ -119,7 +147,7 @@ export default function Register() {
           )}
         </button>
 
-        {/* Footer Links */}
+        {/* -------- Footer Link -------- */}
         <p className="text-sm text-center">
           Already have an account?{" "}
           <Link

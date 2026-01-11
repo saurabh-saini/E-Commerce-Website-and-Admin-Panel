@@ -8,6 +8,7 @@ import api from "../../services/api";
 import AuthLayout from "../../components/AuthLayout";
 import FormError from "../../components/FormError";
 import Spinner from "../../components/Spinner";
+import { handleApiError } from "../../utils/handleApiError";
 
 /* ----------------------------------
    Form field types
@@ -82,8 +83,9 @@ export default function ResetPassword() {
 
       // Redirect to login after success
       navigate("/login");
-    } catch {
-      // Error handled globally by axios interceptor
+    } catch (error) {
+      // Errors are handled globally via axios interceptor
+      handleApiError(error);
     }
   };
 

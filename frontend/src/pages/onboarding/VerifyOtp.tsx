@@ -6,6 +6,7 @@ import { MailCheck } from "lucide-react";
 
 import api from "../../services/api";
 import AuthLayout from "../../components/AuthLayout";
+import { handleApiError } from "../../utils/handleApiError";
 
 /* ----------------------------------
    Route state type
@@ -76,8 +77,9 @@ export default function VerifyOtp() {
 
       // Navigate to reset password screen
       navigate("/reset-password", { state: { email } });
-    } catch {
-      // Error handled globally via axios interceptor
+    } catch (error) {
+      // Errors are handled globally via axios interceptor
+      handleApiError(error);
     } finally {
       // Stop loading
       setOtpState((prev) => ({ ...prev, loading: false }));
