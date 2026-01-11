@@ -30,7 +30,7 @@ export const register = async (req: Request, res: Response) => {
   });
 
   res.status(201).json({
-    message: "Registration successful. Please login.",
+    message: "Registration successful",
   });
 };
 
