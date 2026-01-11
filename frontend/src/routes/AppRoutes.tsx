@@ -18,8 +18,8 @@ const ResetPassword = lazy(() => import("../pages/onboarding/ResetPassword"));
 const Logout = lazy(() => import("../pages/onboarding/Logout"));
 
 // Protected Pages
-const Home = lazy(() => import("../pages/Home"));
-const ProductDetail = lazy(() => import("../pages/ProductDetail"));
+const Home = lazy(() => import("../pages/product/Home"));
+const ProductDetail = lazy(() => import("../pages/product/ProductDetails"));
 const Cart = lazy(() => import("../pages/Cart"));
 const Checkout = lazy(() => import("../pages/Checkout"));
 const Payment = lazy(() => import("../pages/Payment"));
