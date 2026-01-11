@@ -1,21 +1,32 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-
-import Login from "../pages/onboarding/Login";
-import Register from "../pages/onboarding/Register";
-import VerifyOtp from "../pages/onboarding/VerifyOtp";
-import ForgotPassword from "../pages/onboarding/ForgotPassword";
-import ResetPassword from "../pages/onboarding/ResetPassword";
-import Logout from "../pages/onboarding/Logout";
-
-import Home from "../pages/Home";
-import ProductDetail from "../pages/ProductDetail";
-import Cart from "../pages/Cart";
-import Checkout from "../pages/Checkout";
-import Payment from "../pages/Payment";
+import { lazy } from "react";
 
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import ProtectedLayout from "../layouts/ProtectedLayout";
+
+/* =====================
+   Lazy Loaded Pages
+===================== */
+
+// Onboarding (Public)
+const Login = lazy(() => import("../pages/onboarding/Login"));
+const Register = lazy(() => import("../pages/onboarding/Register"));
+const VerifyOtp = lazy(() => import("../pages/onboarding/VerifyOtp"));
+const ForgotPassword = lazy(() => import("../pages/onboarding/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/onboarding/ResetPassword"));
+const Logout = lazy(() => import("../pages/onboarding/Logout"));
+
+// Protected Pages
+const Home = lazy(() => import("../pages/Home"));
+const ProductDetail = lazy(() => import("../pages/ProductDetail"));
+const Cart = lazy(() => import("../pages/Cart"));
+const Checkout = lazy(() => import("../pages/Checkout"));
+const Payment = lazy(() => import("../pages/Payment"));
+
+/* =====================
+   Routes
+===================== */
 
 export default function AppRoutes() {
   return (
@@ -23,7 +34,7 @@ export default function AppRoutes() {
       {/* Default */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* 🌐 Public Routes - (ONLY when NOT logged-in) */}
+      {/* 🌐 Public Routes (ONLY when NOT logged-in) */}
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -32,9 +43,9 @@ export default function AppRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
-      {/* 🔐 Protected Routes - (ONLY when logged-in) */}
-      {/* Protected Layout - (Navbar automatically sab protected pages pe dikhega) */}
+      {/* 🔐 Protected Routes (ONLY when logged-in) */}
       <Route element={<ProtectedRoute />}>
+        {/* 🧱 Protected Layout (Navbar / Sidebar etc.) */}
         <Route element={<ProtectedLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/product/:id" element={<ProductDetail />} />
