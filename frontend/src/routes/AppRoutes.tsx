@@ -15,6 +15,7 @@ import Payment from "../pages/Payment";
 
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
+import ProtectedLayout from "../layouts/ProtectedLayout";
 
 export default function AppRoutes() {
   return (
@@ -22,7 +23,7 @@ export default function AppRoutes() {
       {/* Default */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* 🌐 Public Routes (ONLY when NOT logged-in) */}
+      {/* 🌐 Public Routes - (ONLY when NOT logged-in) */}
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -31,14 +32,17 @@ export default function AppRoutes() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Route>
 
-      {/* 🔐 Protected Routes (ONLY when logged-in) */}
+      {/* 🔐 Protected Routes - (ONLY when logged-in) */}
+      {/* Protected Layout - (Navbar automatically sab protected pages pe dikhega) */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/home" element={<Home />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/payment" element={<Payment />} />
-        <Route path="/logout" element={<Logout />} />
+        <Route element={<ProtectedLayout />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/logout" element={<Logout />} />
+        </Route>
       </Route>
 
       {/* Fallback */}
