@@ -1,5 +1,7 @@
 import axios from "axios";
 import { toast } from "react-toastify";
+import { store } from "../store";
+import { logout } from "../store/slices/authSlice";
 
 const api = axios.create({
   baseURL: "http://localhost:8082/api",
@@ -8,15 +10,12 @@ const api = axios.create({
   },
 });
 
-/* 🔐 Request Interceptor */
+/* =========================
+   Request Interceptor
+========================= */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-
-    // Token expected but missing
-    if (!token && config.url?.includes("/auth") === false) {
-      toast.error("Session expired. Please login again.");
-    }
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -25,25 +24,38 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    toast.error("Request error");
     return Promise.reject(error);
   }
 );
 
-/* ❌ Global Response Error Handler */
+/* =========================
+   Response Interceptor
+   AUTO LOGOUT ON EXPIRY
+========================= */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error.response?.status;
     const message =
       error.response?.data?.message || error.message || "Something went wrong";
 
-    // Auth errors
-    if (error.response?.status === 401) {
-      toast.error("Unauthorized. Please login again.");
-      localStorage.removeItem("token");
-    } else if (error.response?.status === 403) {
+    // 🔐 Token expired / invalid
+    if (status === 401) {
+      store.dispatch(logout());
+
+      toast.error("Session expired. Please login again.");
+
+      // Hard redirect (safe, no loop)
+      window.location.href = "/login";
+    }
+
+    // 🚫 Forbidden
+    else if (status === 403) {
       toast.error("Access denied");
-    } else {
+    }
+
+    // ❌ Other errors
+    else {
       toast.error(message);
     }
 
