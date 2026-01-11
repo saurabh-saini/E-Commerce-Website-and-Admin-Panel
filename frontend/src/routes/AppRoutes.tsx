@@ -14,6 +14,7 @@ import Checkout from "../pages/Checkout";
 import Payment from "../pages/Payment";
 
 import ProtectedRoute from "./ProtectedRoute";
+import PublicRoute from "./PublicRoute";
 
 export default function AppRoutes() {
   return (
@@ -21,21 +22,23 @@ export default function AppRoutes() {
       {/* Default */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/verify-otp" element={<VerifyOtp />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
-      <Route path="/logout" element={<Logout />} />
+      {/* 🌐 Public Routes (ONLY when NOT logged-in) */}
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+      </Route>
 
-      {/* 🔐 Protected Routes Group */}
+      {/* 🔐 Protected Routes (ONLY when logged-in) */}
       <Route element={<ProtectedRoute />}>
         <Route path="/home" element={<Home />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/payment" element={<Payment />} />
+        <Route path="/logout" element={<Logout />} />
       </Route>
 
       {/* Fallback */}
