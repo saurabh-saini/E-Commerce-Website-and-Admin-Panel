@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
+
 import type { RootState } from "../store";
 import { useLogout } from "../hooks/useLogout";
+import { selectCartCount } from "../store/selectors/cartSelectors";
 
 export default function Navbar() {
   const { user } = useSelector((state: RootState) => state.auth);
+  const cartCount = useSelector(selectCartCount);
 
   const logout = useLogout();
 
@@ -45,8 +48,22 @@ export default function Navbar() {
           Home
         </Link>
 
-        <Link to="/cart" className="hover:text-blue-600 cursor-pointer">
+        {/* 🛒 CART WITH BADGE */}
+        <Link to="/cart" className="relative hover:text-blue-600">
           Cart
+          {cartCount > 0 && (
+            <span
+              className="
+                absolute -top-2 -right-3
+                bg-red-500 text-white
+                text-xs font-bold
+                w-5 h-5 rounded-full
+                flex items-center justify-center
+              "
+            >
+              {cartCount}
+            </span>
+          )}
         </Link>
 
         <button
