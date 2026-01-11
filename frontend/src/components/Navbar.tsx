@@ -1,20 +1,12 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState, AppDispatch } from "../store";
-import { logout } from "../store/slices/authSlice";
-import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store";
+import { useLogout } from "../hooks/useLogout";
 
 export default function Navbar() {
-  const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
-
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    toast.success("Logout successful");
-    navigate("/login");
-  };
+  const logout = useLogout();
 
   return (
     <nav className="bg-white border-b shadow-sm px-6 py-3 flex items-center justify-between">
@@ -58,7 +50,7 @@ export default function Navbar() {
         </Link>
 
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="text-red-500 hover:text-red-600 cursor-pointer"
         >
           Logout

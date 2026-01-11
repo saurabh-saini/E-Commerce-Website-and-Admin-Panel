@@ -1,13 +1,21 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
+
 import AuthLayout from "../../components/AuthLayout";
+import { useLogout } from "../../hooks/useLogout";
 
 export default function Logout() {
+  const logout = useLogout();
+
+  // 🔥 Auto logout on page load
+  useEffect(() => {
+    logout();
+  }, []);
+
   return (
     <AuthLayout title="Logged Out">
       <div className="text-center space-y-4">
-        <p className="text-gray-600">
-          You have been successfully logged out.
-        </p>
+        <p className="text-gray-600">You have been successfully logged out.</p>
 
         <Link
           to="/login"
