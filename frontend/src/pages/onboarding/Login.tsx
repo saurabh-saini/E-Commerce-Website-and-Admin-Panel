@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import { Eye, EyeOff } from "lucide-react";
 
 import FormError from "../../components/FormError";
 import AuthLayout from "../../components/AuthLayout";
@@ -9,6 +11,7 @@ import AuthLayout from "../../components/AuthLayout";
 import api from "../../services/api";
 import type { AppDispatch } from "../../store";
 import { loginSuccess } from "../../store/slices/authSlice";
+import Spinner from "../../components/Spinner";
 
 type LoginForm = {
   email: string;
@@ -16,6 +19,8 @@ type LoginForm = {
 };
 
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -58,13 +63,15 @@ export default function Login() {
             })}
             // type="email"
             placeholder="Email"
-            className="w-full border px-3 py-2 rounded"
+            className="w-full border px-3 py-2 rounded
+           focus:outline-none focus:ring-2 focus:ring-blue-500
+           focus:border-blue-500"
           />
           <FormError message={errors.email?.message} />
         </div>
 
         {/* Password */}
-        <div>
+        <div className="relative">
           <input
             {...register("password", {
               required: "Password is required",
@@ -73,18 +80,38 @@ export default function Login() {
                 message: "Password must be at least 6 characters",
               },
             })}
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password"
-            className="w-full border px-3 py-2 rounded"
+            className="w-full border px-3 py-2 rounded
+           focus:outline-none focus:ring-2 focus:ring-blue-500
+           focus:border-blue-500"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
           <FormError message={errors.password?.message} />
         </div>
 
         <button
           disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          className={`w-full py-2 rounded text-white flex items-center justify-center gap-2 transition
+          ${
+            isSubmitting
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+          }`}
         >
-          {isSubmitting ? "Logging in..." : "Login"}
+          {isSubmitting ? (
+            <>
+              <Spinner /> Logging in...
+            </>
+          ) : (
+            "Login"
+          )}
         </button>
 
         <div className="text-sm text-center space-y-1">
@@ -92,7 +119,7 @@ export default function Login() {
             Forgot password?{" "}
             <Link
               to="/forgot-password"
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 hover:underline cursor-pointer"
             >
               Click here
             </Link>
@@ -100,7 +127,10 @@ export default function Login() {
 
           <p>
             Don’t have an account?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
+            <Link
+              to="/register"
+              className="text-blue-600 hover:underline cursor-pointer"
+            >
               Register
             </Link>
           </p>
