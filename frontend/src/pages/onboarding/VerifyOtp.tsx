@@ -1,63 +1,160 @@
-import { useState } from "react";
-import AuthLayout from "../../components/AuthLayout";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import OtpInput from "react-otp-input";
+import { MailCheck } from "lucide-react";
+
+import api from "../../services/api";
+import AuthLayout from "../../components/AuthLayout";
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(30);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const email: string | undefined = location.state?.email;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("OTP:", otp); // API later
+
+    if (otp.length !== 6) {
+      toast.error("Please enter 6-digit OTP");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await api.post("/auth/verify-otp", { email, otp });
+      toast.success("OTP verified successfully");
+      navigate("/reset-password", { state: { email } });
+    } catch {
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <AuthLayout title="Verify OTP">
-      <p className="text-sm text-gray-600 text-center mb-4">
-        Enter the 6-digit code sent to your email
-      </p>
+  const handleResend = async () => {
+    try {
+      await api.post("/auth/forgot-password", { email });
+      toast.success("OTP resent to your email");
+      setTimer(30);
+      setOtp("");
+    } catch {}
+  };
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* OTP INPUT */}
-        <div className="flex justify-center">
-          <OtpInput
-            value={otp}
-            onChange={setOtp}
-            numInputs={6}
-            shouldAutoFocus
-            inputType="number"
-            renderInput={(props) => (
-              <input
-                {...props}
-                className="w-10 h-12 mx-1 text-center text-lg border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            )}
-          />
+  useEffect(() => {
+    if (!email) {
+      navigate("/forgot-password", { replace: true });
+    }
+  }, [email, navigate]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (timer === 0) return;
+    const interval = setInterval(() => {
+      setTimer((t) => t - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  return (
+    <AuthLayout title="">
+      <div className="flex flex-col items-center text-center space-y-4">
+        {/* ICON */}
+        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+          <MailCheck className="text-blue-600" size={32} />
         </div>
 
-        {/* Verify Button */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-        >
-          Verify
-        </button>
+        {/* TITLE */}
+        <h2 className="text-2xl font-semibold">OTP Verification</h2>
 
-        {/* Resend OTP */}
-        <p className="text-sm text-center text-gray-600">
-          Didn’t receive the code?{" "}
-          <button type="button" className="text-blue-600 hover:underline">
-            Resend OTP
+        {/* DESCRIPTION */}
+        <p className="text-sm text-gray-600">
+          One Time Password (OTP) has been sent to
+          <br />
+          <span className="font-medium text-gray-800">{email}</span>
+        </p>
+
+        {/* OTP INPUT */}
+        <form onSubmit={handleSubmit} className="w-full space-y-6 mt-2">
+          <div className="flex justify-center">
+            <OtpInput
+              value={otp}
+              onChange={setOtp}
+              numInputs={6}
+              shouldAutoFocus
+              inputType="text"
+              renderInput={(props) => (
+                <input
+                  {...props}
+                  inputMode="numeric"
+                  placeholder="0"
+                  onFocus={(e) => e.target.select()}
+                  className="
+                        w-11 h-11
+                        mx-2
+                        text-center text-lg font-bold
+                        text-black                /* 🔥 FIX 1 */
+                        bg-white                  /* 🔥 FIX 2 */
+                        border border-gray-400
+                        rounded-md
+                        placeholder-gray-300
+                        focus:outline-none
+                        focus:ring-2 focus:ring-blue-500
+                        focus:border-blue-500
+                      "
+                />
+              )}
+            />
+          </div>
+
+          {/* TIMER */}
+          <p className="text-sm text-gray-500">
+            {timer > 0 ? (
+              <>
+                Resend OTP in{" "}
+                <span className="font-medium">
+                  00:{timer.toString().padStart(2, "0")}
+                </span>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                className="text-blue-600 hover:underline cursor-pointer"
+              >
+                Resend OTP
+              </button>
+            )}
+          </p>
+
+          {/* VERIFY BUTTON */}
+          <button
+            type="submit"
+            disabled={loading || otp.length !== 6}
+            className={`w-full py-3 rounded-full text-white font-medium transition
+              ${
+                loading || otp.length !== 6
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              }`}
+          >
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
-        </p>
 
-        {/* Back to Login */}
-        <p className="text-sm text-center">
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Back to Login
-          </Link>
-        </p>
-      </form>
+          {/* BACK */}
+          <p className="text-sm">
+            <Link
+              to="/login"
+              className="text-blue-600 hover:underline cursor-pointer"
+            >
+              Back to Login
+            </Link>
+          </p>
+        </form>
+      </div>
     </AuthLayout>
   );
 }
