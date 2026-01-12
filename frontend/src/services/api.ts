@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { store } from "../store";
 import { logout } from "../store/slices/authSlice";
@@ -16,46 +16,51 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 /* =========================
    Response Interceptor
-   AUTO LOGOUT ON EXPIRY
 ========================= */
+
+let isLoggingOut = false;
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: AxiosError<any>) => {
     const status = error.response?.status;
     const message =
       error.response?.data?.message || error.message || "Something went wrong";
 
-    // 🔐 Token expired / invalid
-    if (status === 401) {
-      store.dispatch(logout());
+    const requestUrl = error.config?.url || "";
 
-      toast.error("Session expired. Please login again.");
+    // ❌ IGNORE auth routes (LOGIN, REGISTER, etc.)
+    const isAuthRoute =
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/register") ||
+      requestUrl.includes("/auth/forgot-password") ||
+      requestUrl.includes("/auth/verify-otp") ||
+      requestUrl.includes("/auth/reset-password");
 
-      // Hard redirect (safe, no loop)
-      window.location.href = "/login";
-    }
+    if (status === 401 && !isAuthRoute) {
+      if (!isLoggingOut) {
+        isLoggingOut = true;
 
-    // 🚫 Forbidden
-    else if (status === 403) {
+        toast.error("Session expired. Please login again.");
+        store.dispatch(logout());
+
+        setTimeout(() => {
+          isLoggingOut = false;
+        }, 1000);
+      }
+    } else if (status === 403) {
       toast.error("Access denied");
-    }
-
-    // ❌ Other errors
-    else {
+    } else if (!isAuthRoute) {
       toast.error(message);
     }
 
