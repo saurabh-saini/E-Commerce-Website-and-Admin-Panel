@@ -3,8 +3,9 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 /* ===============================
    ORDER ITEM TYPE
 ================================ */
+
 interface OrderItem {
-  product: Types.ObjectId | string;
+  product: Types.ObjectId;
   name: string;
   price: number;
   quantity: number;
@@ -13,6 +14,7 @@ interface OrderItem {
 /* ===============================
    SHIPPING ADDRESS TYPE
 ================================ */
+
 interface ShippingAddress {
   name: string;
   phone: string;
@@ -24,16 +26,27 @@ interface ShippingAddress {
 /* ===============================
    ORDER INTERFACE
 ================================ */
+
 export interface IOrder extends Document {
   user: Types.ObjectId;
   items: OrderItem[];
   shippingAddress: ShippingAddress;
+
   totalAmount: number;
 
-  paymentStatus: "pending" | "paid";
-  paidAt?: Date; // ✅ FIX 1
+  paymentStatus: "pending" | "paid" | "failed";
 
-  orderStatus: "placed" | "shipped" | "delivered" | "cancelled"; // ✅ FIX 2
+  paymentId?: Types.ObjectId;
+
+  paidAt?: Date;
+
+  orderStatus:
+    | "placed"
+    | "confirmed"
+    | "shipped"
+    | "delivered"
+    | "cancelled"
+    | "refunded";
 
   createdAt: Date;
   updatedAt: Date;
@@ -42,6 +55,7 @@ export interface IOrder extends Document {
 /* ===============================
    ORDER SCHEMA
 ================================ */
+
 const orderSchema = new Schema<IOrder>(
   {
     user: {
@@ -78,21 +92,35 @@ const orderSchema = new Schema<IOrder>(
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid"],
+      enum: ["pending", "paid", "failed"],
       default: "pending",
     },
 
+    paymentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Payment",
+    },
+
     paidAt: {
-      type: Date, // ✅ FIX 1
+      type: Date,
     },
 
     orderStatus: {
       type: String,
-      enum: ["placed", "shipped", "delivered", "cancelled"],
-      default: "placed", // ✅ FIX 2
+      enum: [
+        "placed",
+        "confirmed",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "refunded",
+      ],
+      default: "placed",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
 export default mongoose.model<IOrder>("Order", orderSchema);
