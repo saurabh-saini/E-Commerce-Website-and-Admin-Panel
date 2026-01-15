@@ -12,6 +12,7 @@ type Product = {
   description: string;
   price: number;
   images: string[];
+  stock: number;
 };
 
 export default function ProductDetail() {
@@ -80,10 +81,15 @@ export default function ProductDetail() {
         <p className="text-2xl font-semibold text-blue-600">₹{product.price}</p>
 
         <button
+          disabled={product.stock === 0}
           onClick={handleAddToCart}
-          className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700"
+          className={`w-full py-3 rounded ${
+            product.stock === 0
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
         >
-          Add to Cart
+          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
         </button>
       </div>
     </div>

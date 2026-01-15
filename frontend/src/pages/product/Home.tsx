@@ -8,6 +8,7 @@ type Product = {
   name: string;
   price: number;
   images: string[];
+  stock: number;
 };
 
 export default function Home() {
@@ -57,6 +58,11 @@ export default function Home() {
           )}
           <h3 className="mt-3 font-semibold text-lg">{product.name}</h3>
           <p className="text-blue-600 font-bold mt-1">₹{product.price}</p>
+          {product.stock === 0 && (
+            <span className="text-red-500 text-sm font-medium">
+              Out of Stock
+            </span>
+          )}
 
           <button
             onClick={() => navigate(`/product/${product._id}`)}

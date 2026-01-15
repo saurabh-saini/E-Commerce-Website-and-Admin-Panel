@@ -116,7 +116,7 @@ export default function Payment() {
 
       navigate("/order-success/" + orderId);
     } catch (error) {
-      toast.error("Payment failed");
+      console.error(error);
     } finally {
       setLoading(false);
     }

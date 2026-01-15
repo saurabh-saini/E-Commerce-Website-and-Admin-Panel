@@ -52,6 +52,27 @@ export default function OrderDetails() {
     fetchOrder();
   }, [id]);
 
+  const handleCancelOrder = async () => {
+    if (!order) return;
+
+    const confirm = window.confirm(
+      "Are you sure you want to cancel this order?"
+    );
+
+    if (!confirm) return;
+
+    try {
+      await api.put(`/orders/${order._id}/cancel`);
+
+      alert("Order cancelled successfully");
+
+      // Refresh order
+      window.location.reload();
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Loading invoice...</div>;
   }
@@ -96,6 +117,15 @@ export default function OrderDetails() {
           <p className="text-sm text-gray-500">Order Status</p>
           <p className="font-medium text-blue-600">{order.orderStatus}</p>
         </div>
+
+        {order.orderStatus === "placed" && order.paymentStatus !== "paid" && (
+          <button
+            onClick={handleCancelOrder}
+            className="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600"
+          >
+            Cancel Order
+          </button>
+        )}
       </div>
 
       {/* SHIPPING */}

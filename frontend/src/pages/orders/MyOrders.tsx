@@ -88,8 +88,9 @@ export default function MyOrders() {
             </div>
 
             {/* RIGHT */}
+
             <button
-              onClick={() => navigate(`/order-success/${order._id}`)}
+              onClick={() => navigate(`/orders/${order._id}`)}
               className="text-blue-600 hover:underline"
             >
               View Details

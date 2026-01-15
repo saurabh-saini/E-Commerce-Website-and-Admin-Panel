@@ -40,17 +40,17 @@ export default function OrderSuccess() {
         {/* ACTION BUTTONS */}
         <div className="flex flex-col gap-3">
           <button
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/home", { replace: true })}
             className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
           >
             Continue Shopping
           </button>
 
           <button
-            onClick={() => navigate("/orders")}
+            onClick={() => navigate(`/orders/${id}`)}
             className="border py-2 rounded hover:bg-gray-100"
           >
-            View My Orders
+            View Order Details
           </button>
         </div>
       </div>

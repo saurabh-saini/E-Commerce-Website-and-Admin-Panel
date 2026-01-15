@@ -143,25 +143,47 @@ export const payOrder = async (req: Request, res: Response) => {
   }
 };
 
+/* =========================
+   CANCEL ORDER
+========================= */
+
 export const cancelOrder = async (req: Request, res: Response) => {
-  const order = await Order.findById(req.params.id);
+  try {
+    const { id } = req.params;
 
-  if (!order) {
-    return res.status(404).json({ message: "Order not found" });
-  }
+    const order = await Order.findById(id);
 
-  if (order.user.toString() !== req.user!.id.toString()) {
-    return res.status(403).json({ message: "Unauthorized" });
-  }
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
 
-  if (order.orderStatus !== "placed") {
-    return res.status(400).json({
-      message: "Order cannot be cancelled now",
+    // Only owner can cancel
+    if (order.user.toString() !== req.user!.id.toString()) {
+      return res.status(403).json({
+        message: "Unauthorized access",
+      });
+    }
+
+    // Business rule
+    if (order.orderStatus !== "placed") {
+      return res.status(400).json({
+        message: "Order cannot be cancelled now",
+      });
+    }
+
+    order.orderStatus = "cancelled";
+
+    await order.save();
+
+    res.json({
+      message: "Order cancelled successfully",
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to cancel order",
     });
   }
-
-  order.orderStatus = "cancelled";
-  await order.save();
-
-  res.json({ message: "Order cancelled successfully" });
 };

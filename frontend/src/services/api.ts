@@ -11,21 +11,24 @@ const api = axios.create({
 });
 
 /* =========================
-   Request Interceptor
+   REQUEST INTERCEPTOR
 ========================= */
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
 /* =========================
-   Response Interceptor
+   RESPONSE INTERCEPTOR
 ========================= */
 
 let isLoggingOut = false;
@@ -34,33 +37,47 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<any>) => {
     const status = error.response?.status;
-    const message =
-      error.response?.data?.message || error.message || "Something went wrong";
+    const message = error.response?.data?.message || "Something went wrong";
 
     const requestUrl = error.config?.url || "";
 
-    // ❌ IGNORE auth routes (LOGIN, REGISTER, etc.)
+    /* ========= Ignore Auth Routes ========= */
+
     const isAuthRoute =
       requestUrl.includes("/auth/login") ||
       requestUrl.includes("/auth/register") ||
       requestUrl.includes("/auth/forgot-password") ||
-      requestUrl.includes("/auth/verify-otp") ||
-      requestUrl.includes("/auth/reset-password");
+      requestUrl.includes("/auth/reset-password") ||
+      requestUrl.includes("/auth/verify-otp");
+
+    /* ========= Auto Logout ========= */
 
     if (status === 401 && !isAuthRoute) {
       if (!isLoggingOut) {
         isLoggingOut = true;
 
-        toast.error("Session expired. Please login again.");
+        toast.error("Session expired. Please login again");
+
         store.dispatch(logout());
 
         setTimeout(() => {
           isLoggingOut = false;
-        }, 1000);
+        }, 1500);
       }
-    } else if (status === 403) {
+
+      return Promise.reject(error);
+    }
+
+    /* ========= Forbidden ========= */
+
+    if (status === 403) {
       toast.error("Access denied");
-    } else if (!isAuthRoute) {
+      return Promise.reject(error);
+    }
+
+    /* ========= Normal API Errors ========= */
+
+    if (!isAuthRoute) {
       toast.error(message);
     }
 
