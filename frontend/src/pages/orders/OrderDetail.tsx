@@ -118,14 +118,27 @@ export default function OrderDetails() {
           <p className="font-medium text-blue-600">{order.orderStatus}</p>
         </div>
 
-        {order.orderStatus === "placed" && order.paymentStatus !== "paid" && (
-          <button
-            onClick={handleCancelOrder}
-            className="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600"
-          >
-            Cancel Order
-          </button>
-        )}
+        <div className="flex gap-3">
+          {/* PAY NOW BUTTON */}
+          {order.paymentStatus === "pending" && (
+            <button
+              onClick={() => navigate(`/payment?orderId=${order._id}`)}
+              className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700"
+            >
+              Pay Now
+            </button>
+          )}
+
+          {/* CANCEL BUTTON */}
+          {order.orderStatus === "placed" && (
+            <button
+              onClick={handleCancelOrder}
+              className="bg-red-500 text-white px-5 py-2 rounded hover:bg-red-600"
+            >
+              Cancel Order
+            </button>
+          )}
+        </div>
       </div>
 
       {/* SHIPPING */}

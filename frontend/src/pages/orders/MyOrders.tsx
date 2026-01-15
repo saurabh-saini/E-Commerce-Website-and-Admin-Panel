@@ -88,6 +88,14 @@ export default function MyOrders() {
             </div>
 
             {/* RIGHT */}
+            {order.paymentStatus === "pending" && (
+              <button
+                onClick={() => navigate(`/payment?orderId=${order._id}`)}
+                className="text-green-600 font-medium"
+              >
+                Pay Now
+              </button>
+            )}
 
             <button
               onClick={() => navigate(`/orders/${order._id}`)}
