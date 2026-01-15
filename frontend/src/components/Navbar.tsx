@@ -48,6 +48,10 @@ export default function Navbar() {
           Home
         </Link>
 
+        <Link to="/orders" className="hover:text-blue-600">
+          My Orders
+        </Link>
+
         {/* 🛒 CART WITH BADGE */}
         <Link to="/cart" className="relative hover:text-blue-600">
           Cart

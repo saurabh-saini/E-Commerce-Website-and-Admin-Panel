@@ -4,6 +4,8 @@ import { lazy } from "react";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 import ProtectedLayout from "../layouts/ProtectedLayout";
+import MyOrders from "../pages/orders/MyOrders";
+import OrderDetail from "../pages/orders/OrderDetail";
 
 /* =====================
    Lazy Loaded Pages
@@ -48,11 +50,13 @@ export default function AppRoutes() {
         {/* 🧱 Protected Layout (Navbar / Sidebar etc.) */}
         <Route element={<ProtectedLayout />}>
           <Route path="/home" element={<Home />} />
+          <Route path="/logout" element={<Logout />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment" element={<Payment />} />
-          <Route path="/logout" element={<Logout />} />
+          <Route path="/orders" element={<MyOrders />} />
+          <Route path="/orders/:id" element={<OrderDetail />} />
         </Route>
       </Route>
 
