@@ -1,38 +1,30 @@
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
-import api from "../../services/api";
-import { toast } from "react-toastify";
 import Spinner from "../../components/Spinner";
-
-// type LocationState = {
-//   orderId: string;
-// };
+import { startPayment } from "../../services/paymentService";
 
 export default function Payment() {
   const navigate = useNavigate();
-  // const location = useLocation() as { state: LocationState };
   const [searchParams] = useSearchParams();
-  const orderId = searchParams.get("orderId");
 
-  // const orderId = location.state?.orderId;
+  const orderId = searchParams.get("orderId");
 
   const [loading, setLoading] = useState(false);
 
+  // ✅ Guard
   if (!orderId) {
     navigate("/home");
+    return null;
   }
 
   const handlePayment = async () => {
     try {
       setLoading(true);
 
-      await api.post(`/orders/${orderId}/pay`);
-
-      toast.success("Payment successful");
-
-      navigate("/order-success/" + orderId);
+      await startPayment(orderId);
     } catch (error) {
       console.error(error);
+      alert("Payment failed");
     } finally {
       setLoading(false);
     }
@@ -51,11 +43,11 @@ export default function Payment() {
           onClick={handlePayment}
           disabled={loading}
           className={`w-full py-3 rounded text-white font-medium
-            ${loading ? "bg-green-400" : "bg-green-600 hover:bg-green-700"}`}
+          ${loading ? "bg-green-400" : "bg-green-600 hover:bg-green-700"}`}
         >
           {loading ? (
             <>
-              <Spinner /> Processing...
+              <Spinner /> Processing Payment...
             </>
           ) : (
             "Pay Now"

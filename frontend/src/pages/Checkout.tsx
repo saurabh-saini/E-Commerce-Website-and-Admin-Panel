@@ -76,9 +76,7 @@ export default function Checkout() {
       toast.success("Order created successfully");
 
       // 🔥 Redirect to payment with orderId
-      navigate("/payment", {
-        state: { orderId: res.data.orderId },
-      });
+      navigate(`/payment?orderId=${res.data.orderId}`);
     } catch (error) {
       toast.error("Failed to create order");
     }

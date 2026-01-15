@@ -5,6 +5,12 @@ import razorpayInstance from "../config/razorpay";
 import Order from "../models/Order";
 import Payment from "../models/payment.model";
 
+const PAYMENT_MODE = process.env.PAYMENT_MODE || "mock";
+
+/* ================================
+   CREATE PAYMENT ORDER
+================================ */
+
 export const createRazorpayOrder = async (req: Request, res: Response) => {
   try {
     const { orderId } = req.body;
@@ -18,13 +24,41 @@ export const createRazorpayOrder = async (req: Request, res: Response) => {
       });
     }
 
+    /* =========================
+        MOCK PAYMENT MODE
+    ========================== */
+
+    if (PAYMENT_MODE === "mock") {
+      const fakeOrderId = "mock_order_" + Date.now();
+
+      const payment = await Payment.create({
+        orderId: order._id,
+        razorpayOrderId: fakeOrderId,
+        amount: order.totalAmount,
+        status: "created",
+      });
+
+      order.paymentId = payment._id;
+      await order.save();
+
+      return res.status(200).json({
+        success: true,
+        razorpayOrderId: fakeOrderId,
+        amount: order.totalAmount * 100,
+        currency: "INR",
+        key: "mock_key",
+      });
+    }
+
+    /* =========================
+        REAL RAZORPAY MODE
+    ========================== */
+
     const razorpayOrder = await razorpayInstance.orders.create({
       amount: order.totalAmount * 100,
       currency: "INR",
       receipt: orderId,
     });
-
-    // ✅ CREATE PAYMENT ENTRY
 
     const payment = await Payment.create({
       orderId: order._id,
@@ -32,8 +66,6 @@ export const createRazorpayOrder = async (req: Request, res: Response) => {
       amount: order.totalAmount,
       status: "created",
     });
-
-    // Save payment reference in order
 
     order.paymentId = payment._id;
     await order.save();
@@ -50,10 +82,14 @@ export const createRazorpayOrder = async (req: Request, res: Response) => {
 
     res.status(500).json({
       success: false,
-      message: "Razorpay order failed",
+      message: "Payment order failed",
     });
   }
 };
+
+/* ================================
+   VERIFY PAYMENT
+================================ */
 
 export const verifyRazorpayPayment = async (req: Request, res: Response) => {
   try {
@@ -65,10 +101,40 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       method,
     } = req.body;
 
+    /* =========================
+        MOCK PAYMENT MODE
+    ========================== */
+
+    if (PAYMENT_MODE === "mock") {
+      await Payment.findOneAndUpdate(
+        { razorpayOrderId: razorpay_order_id },
+        {
+          razorpayPaymentId: "mock_payment_" + Date.now(),
+          status: "success",
+          method: "mock",
+        }
+      );
+
+      await Order.findByIdAndUpdate(orderId, {
+        paymentStatus: "paid",
+        orderStatus: "confirmed",
+        paidAt: new Date(),
+      });
+
+      return res.json({
+        success: true,
+        message: "Mock payment successful",
+      });
+    }
+
+    /* =========================
+        REAL RAZORPAY MODE
+    ========================== */
+
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET as string)
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
       .update(body)
       .digest("hex");
 
@@ -84,20 +150,15 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
       });
     }
 
-    // ✅ UPDATE PAYMENT
-
-    const payment = await Payment.findOneAndUpdate(
+    await Payment.findOneAndUpdate(
       { razorpayOrderId: razorpay_order_id },
       {
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
         status: "success",
         method,
-      },
-      { new: true }
+      }
     );
-
-    // ✅ UPDATE ORDER
 
     await Order.findByIdAndUpdate(orderId, {
       paymentStatus: "paid",
@@ -119,6 +180,10 @@ export const verifyRazorpayPayment = async (req: Request, res: Response) => {
   }
 };
 
+/* ================================
+   PAYMENT FAILED / CANCEL
+================================ */
+
 export const paymentFailed = async (req: Request, res: Response) => {
   const { orderId } = req.body;
 
@@ -126,8 +191,6 @@ export const paymentFailed = async (req: Request, res: Response) => {
     paymentStatus: "failed",
     orderStatus: "cancelled",
   });
-
-  // TODO: stock restore logic here
 
   res.json({ success: true });
 };
