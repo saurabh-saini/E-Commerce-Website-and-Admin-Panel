@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import { Request, Response } from "express";
 import Order from "../models/Order";
 
@@ -49,5 +51,38 @@ export const getMyOrders = async (req: Request, res: Response) => {
     res.json(orders);
   } catch {
     res.status(500).json({ message: "Failed to fetch orders" });
+  }
+};
+
+/* ================================
+   GET SINGLE ORDER BY ID
+================================ */
+export const getOrderById = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { id } = req.params;
+
+    // 🔥 ObjectId validation
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid order id" });
+    }
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // 🔒 Security: user sirf apna order dekh sake
+    if (order.user.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    res.json(order);
+  } catch {
+    res.status(500).json({ message: "Failed to fetch order" });
   }
 };
