@@ -1,5 +1,8 @@
 import { Types } from "mongoose";
 
+/* ======================================
+   Extend Express Request Interface
+====================================== */
 declare global {
   namespace Express {
     interface Request {
