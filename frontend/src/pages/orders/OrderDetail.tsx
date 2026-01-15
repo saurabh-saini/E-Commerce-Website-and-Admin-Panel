@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { handleApiError } from "../../utils/handleApiError";
-import { toast } from "react-toastify";
-
-/* ---------------- TYPES ---------------- */
 
 type OrderItem = {
   name: string;
@@ -23,24 +20,20 @@ type ShippingAddress = {
 type Order = {
   _id: string;
   items: OrderItem[];
-  shippingAddress: ShippingAddress;
   totalAmount: number;
   paymentStatus: string;
   orderStatus: string;
+  paidAt?: string;
   createdAt: string;
+  shippingAddress: ShippingAddress;
 };
 
-/* ---------------- COMPONENT ---------------- */
-
-export default function OrderDetail() {
-  const { id } = useParams<{ id: string }>();
+export default function OrderDetails() {
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [cancelLoading, setCancelLoading] = useState<boolean>(false);
-
-  /* ---------------- FETCH ORDER ---------------- */
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
@@ -59,32 +52,8 @@ export default function OrderDetail() {
     fetchOrder();
   }, [id]);
 
-  /* ---------------- CANCEL ORDER ---------------- */
-
-  const handleCancelOrder = async () => {
-    if (!order) return;
-
-    try {
-      setCancelLoading(true);
-
-      await api.put(`/orders/${order._id}/cancel`);
-
-      toast.success("Order cancelled successfully");
-
-      // Refresh page data
-      const res = await api.get<Order>(`/orders/${order._id}`);
-      setOrder(res.data);
-    } catch (error) {
-      handleApiError(error);
-    } finally {
-      setCancelLoading(false);
-    }
-  };
-
-  /* ---------------- UI STATES ---------------- */
-
   if (loading) {
-    return <div className="p-6">Loading order...</div>;
+    return <div className="p-6">Loading invoice...</div>;
   }
 
   if (!order) {
@@ -95,53 +64,42 @@ export default function OrderDetail() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Order #{order._id.slice(-6)}</h1>
+        <h1 className="text-2xl font-bold">Order Invoice</h1>
 
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/orders")}
           className="text-blue-600 hover:underline"
         >
-          ← Back
+          Back to Orders
         </button>
       </div>
 
       {/* STATUS */}
-      <div className="border p-4 rounded flex justify-between">
+      <div className="flex justify-between border p-4 rounded">
         <div>
-          <p>
-            <span className="font-semibold">Order Status:</span>{" "}
-            <span className="capitalize">{order.orderStatus}</span>
-          </p>
+          <p className="text-sm text-gray-500">Order ID</p>
+          <p className="font-medium">{order._id}</p>
+        </div>
 
-          <p>
-            <span className="font-semibold">Payment:</span>{" "}
-            <span
-              className={`font-semibold ${
-                order.paymentStatus === "paid"
-                  ? "text-green-600"
-                  : "text-red-500"
-              }`}
-            >
-              {order.paymentStatus}
-            </span>
+        <div>
+          <p className="text-sm text-gray-500">Payment Status</p>
+          <p
+            className={`font-medium ${
+              order.paymentStatus === "paid" ? "text-green-600" : "text-red-500"
+            }`}
+          >
+            {order.paymentStatus}
           </p>
         </div>
 
-        {/* CANCEL BUTTON */}
-        {order.orderStatus === "placed" && (
-          <button
-            disabled={cancelLoading}
-            onClick={handleCancelOrder}
-            className={`px-4 py-2 rounded text-white
-              ${cancelLoading ? "bg-red-300" : "bg-red-500 hover:bg-red-600"}`}
-          >
-            {cancelLoading ? "Cancelling..." : "Cancel Order"}
-          </button>
-        )}
+        <div>
+          <p className="text-sm text-gray-500">Order Status</p>
+          <p className="font-medium text-blue-600">{order.orderStatus}</p>
+        </div>
       </div>
 
       {/* SHIPPING */}
-      <div className="border p-4 rounded">
+      <div className="border p-4 rounded space-y-1">
         <h2 className="font-semibold mb-2">Shipping Address</h2>
 
         <p>{order.shippingAddress.name}</p>
@@ -153,27 +111,26 @@ export default function OrderDetail() {
       </div>
 
       {/* ITEMS */}
-      <div className="border p-4 rounded">
-        <h2 className="font-semibold mb-2">Items</h2>
+      <div className="border rounded p-4">
+        <h2 className="font-semibold mb-3">Ordered Items</h2>
 
-        {order.items.map((item, index) => (
-          <div
-            key={index}
-            className="flex justify-between py-2 border-b last:border-b-0"
-          >
-            <div>
-              <p className="font-medium">{item.name}</p>
-              <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+        <div className="space-y-3">
+          {order.items.map((item, index) => (
+            <div key={index} className="flex justify-between border-b pb-2">
+              <span>
+                {item.name} × {item.quantity}
+              </span>
+
+              <span>₹{item.price * item.quantity}</span>
             </div>
+          ))}
+        </div>
 
-            <p className="font-semibold">₹{item.price * item.quantity}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* TOTAL */}
-      <div className="text-right text-xl font-bold">
-        Total: ₹{order.totalAmount}
+        {/* TOTAL */}
+        <div className="flex justify-between font-semibold text-lg mt-4 border-t pt-3">
+          <span>Total</span>
+          <span className="text-blue-600">₹{order.totalAmount}</span>
+        </div>
       </div>
     </div>
   );

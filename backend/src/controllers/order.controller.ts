@@ -54,36 +54,41 @@ export const getMyOrders = async (req: Request, res: Response) => {
   }
 };
 
-/* ================================
-   GET SINGLE ORDER BY ID
-================================ */
+/* =========================
+   GET SINGLE ORDER
+========================= */
+
 export const getOrderById = async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     const { id } = req.params;
 
-    // 🔥 ObjectId validation
+    // ObjectId validation
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid order id" });
+      return res.status(400).json({
+        message: "Invalid order id",
+      });
     }
 
     const order = await Order.findById(id);
 
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(404).json({
+        message: "Order not found",
+      });
     }
 
-    // 🔒 Security: user sirf apna order dekh sake
-    if (order.user.toString() !== req.user.id.toString()) {
-      return res.status(403).json({ message: "Access denied" });
+    // Security: user can see only his order
+    if (order.user.toString() !== req.user!.id.toString()) {
+      return res.status(403).json({
+        message: "Unauthorized access",
+      });
     }
 
     res.json(order);
-  } catch {
-    res.status(500).json({ message: "Failed to fetch order" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch order",
+    });
   }
 };
 
