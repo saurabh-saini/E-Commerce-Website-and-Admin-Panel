@@ -3,6 +3,7 @@ import {
   createOrder,
   getMyOrders,
   getOrderById,
+  payOrder,
 } from "../controllers/order.controller";
 import authMiddleware from "../middlewares/auth.middleware";
 
@@ -15,5 +16,7 @@ router.post("/", authMiddleware, createOrder);
 router.get("/my", authMiddleware, getMyOrders);
 
 router.get("/:id", authMiddleware, getOrderById);
+
+router.post("/:id/pay", authMiddleware, payOrder);
 
 export default router;

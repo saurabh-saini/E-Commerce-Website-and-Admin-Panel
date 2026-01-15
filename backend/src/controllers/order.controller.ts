@@ -86,3 +86,43 @@ export const getOrderById = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to fetch order" });
   }
 };
+
+/* ===============================
+   PAY ORDER (Payment Success)
+================================ */
+export const payOrder = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid order id" });
+    }
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // 🔐 Security: only owner can pay
+    if (order.user.toString() !== req.user!.id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (order.paymentStatus === "paid") {
+      return res.status(400).json({ message: "Order already paid" });
+    }
+
+    order.paymentStatus = "paid";
+    order.paidAt = new Date();
+
+    await order.save();
+
+    res.json({
+      message: "Payment successful",
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Payment update failed" });
+  }
+};

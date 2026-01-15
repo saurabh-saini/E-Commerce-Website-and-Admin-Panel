@@ -1,24 +1,47 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
-export interface IOrder extends Document {
-  user: mongoose.Types.ObjectId;
-  items: {
-    product: mongoose.Types.ObjectId;
-    name: string;
-    price: number;
-    quantity: number;
-  }[];
-  shippingAddress: {
-    name: string;
-    phone: string;
-    address: string;
-    city: string;
-    pincode: string;
-  };
-  totalAmount: number;
-  paymentStatus: "pending" | "paid" | "failed";
+/* ===============================
+   ORDER ITEM TYPE
+================================ */
+interface OrderItem {
+  product: Types.ObjectId | string;
+  name: string;
+  price: number;
+  quantity: number;
 }
 
+/* ===============================
+   SHIPPING ADDRESS TYPE
+================================ */
+interface ShippingAddress {
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  pincode: string;
+}
+
+/* ===============================
+   ORDER INTERFACE
+================================ */
+export interface IOrder extends Document {
+  user: Types.ObjectId;
+  items: OrderItem[];
+  shippingAddress: ShippingAddress;
+  totalAmount: number;
+
+  paymentStatus: "pending" | "paid";
+  paidAt?: Date; // ✅ FIX 1
+
+  orderStatus: "placed" | "shipped" | "delivered" | "cancelled"; // ✅ FIX 2
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/* ===============================
+   ORDER SCHEMA
+================================ */
 const orderSchema = new Schema<IOrder>(
   {
     user: {
@@ -55,8 +78,18 @@ const orderSchema = new Schema<IOrder>(
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: ["pending", "paid"],
       default: "pending",
+    },
+
+    paidAt: {
+      type: Date, // ✅ FIX 1
+    },
+
+    orderStatus: {
+      type: String,
+      enum: ["placed", "shipped", "delivered", "cancelled"],
+      default: "placed", // ✅ FIX 2
     },
   },
   { timestamps: true }
