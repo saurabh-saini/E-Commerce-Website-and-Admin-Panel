@@ -114,7 +114,7 @@ export default function Payment() {
 
       toast.success("Payment successful");
 
-      navigate("/payment-success");
+      navigate("/order-success/" + orderId);
     } catch (error) {
       toast.error("Payment failed");
     } finally {

@@ -7,6 +7,7 @@ import ProtectedLayout from "../layouts/ProtectedLayout";
 import MyOrders from "../pages/orders/MyOrders";
 import OrderDetail from "../pages/orders/OrderDetail";
 import PaymentSuccess from "../pages/payment/PaymentSuccess";
+import OrderSuccess from "../pages/orders/OrderSuccess";
 
 /* =====================
    Lazy Loaded Pages
@@ -59,6 +60,7 @@ export default function AppRoutes() {
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/orders" element={<MyOrders />} />
           <Route path="/orders/:id" element={<OrderDetail />} />
+          <Route path="/order-success/:id" element={<OrderSuccess />} />
         </Route>
       </Route>
 
