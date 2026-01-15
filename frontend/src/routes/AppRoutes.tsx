@@ -6,6 +6,7 @@ import PublicRoute from "./PublicRoute";
 import ProtectedLayout from "../layouts/ProtectedLayout";
 import MyOrders from "../pages/orders/MyOrders";
 import OrderDetail from "../pages/orders/OrderDetail";
+import PaymentSuccess from "../pages/payment/PaymentSuccess";
 
 /* =====================
    Lazy Loaded Pages
@@ -24,7 +25,7 @@ const Home = lazy(() => import("../pages/product/Home"));
 const ProductDetail = lazy(() => import("../pages/product/ProductDetails"));
 const Cart = lazy(() => import("../pages/Cart"));
 const Checkout = lazy(() => import("../pages/Checkout"));
-const Payment = lazy(() => import("../pages/Payment"));
+const Payment = lazy(() => import("../pages/payment/Payment"));
 
 /* =====================
    Routes
@@ -55,6 +56,7 @@ export default function AppRoutes() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/orders" element={<MyOrders />} />
           <Route path="/orders/:id" element={<OrderDetail />} />
         </Route>

@@ -14,16 +14,21 @@ export default function Cart() {
 
   const { items } = useSelector((state: RootState) => state.cart);
 
+  // 🧮 Total cart value
   const total = items.reduce(
-    (sum: number, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  // 🟡 Empty cart UI
+  /* =====================
+     EMPTY CART UI
+  ===================== */
+
   if (items.length === 0) {
     return (
       <div className="p-6 text-center text-gray-600">
         <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
+
         <button
           onClick={() => navigate("/home")}
           className="text-blue-600 hover:underline"
@@ -34,6 +39,10 @@ export default function Cart() {
     );
   }
 
+  /* =====================
+        MAIN UI
+  ===================== */
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Shopping Cart</h1>
@@ -43,19 +52,30 @@ export default function Cart() {
         {items.map((item) => (
           <div
             key={item._id}
-            className="flex justify-between items-center border rounded p-4"
+            className="flex flex-col sm:flex-row justify-between gap-4 items-center border rounded p-4"
           >
-            {/* LEFT */}
+            {/* PRODUCT INFO */}
             <div>
               <h3 className="font-medium">{item.name}</h3>
-              <p className="text-blue-600 font-semibold">₹{item.price}</p>
+
+              <p className="text-sm text-gray-500">Price: ₹{item.price}</p>
+
+              <p className="font-semibold text-blue-600">
+                Subtotal: ₹{item.price * item.quantity}
+              </p>
             </div>
 
-            {/* QUANTITY */}
+            {/* QUANTITY CONTROL */}
             <div className="flex items-center gap-3">
               <button
+                disabled={item.quantity === 1}
                 onClick={() => dispatch(decreaseQty(item._id))}
-                className="px-3 py-1 border rounded hover:bg-gray-100"
+                className={`px-3 py-1 border rounded
+                  ${
+                    item.quantity === 1
+                      ? "opacity-40 cursor-not-allowed"
+                      : "hover:bg-gray-100"
+                  }`}
               >
                 −
               </button>
@@ -70,7 +90,7 @@ export default function Cart() {
               </button>
             </div>
 
-            {/* REMOVE */}
+            {/* REMOVE BUTTON */}
             <button
               onClick={() => dispatch(removeFromCart(item._id))}
               className="text-red-500 hover:text-red-600"
@@ -81,10 +101,11 @@ export default function Cart() {
         ))}
       </div>
 
-      {/* SUMMARY */}
-      <div className="border-t pt-4 flex justify-between items-center">
+      {/* SUMMARY BAR */}
+      <div className="border-t pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
         <h2 className="text-lg font-semibold">
-          Total: <span className="text-blue-600">₹{total}</span>
+          Total:
+          <span className="text-blue-600 ml-1">₹{total}</span>
         </h2>
 
         <button

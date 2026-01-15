@@ -1,7 +1,9 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
+import api from "../services/api";
 import type { RootState } from "../store";
 
 type AddressForm = {
@@ -19,7 +21,7 @@ export default function Checkout() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<AddressForm>();
 
   // 🧮 Total calculation
@@ -33,6 +35,7 @@ export default function Checkout() {
     return (
       <div className="p-6 text-center text-gray-600">
         <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
+
         <button
           onClick={() => navigate("/home")}
           className="text-blue-600 hover:underline"
@@ -43,10 +46,42 @@ export default function Checkout() {
     );
   }
 
-  const onSubmit = (data: AddressForm) => {
-    // 🔥 For now just log & move to payment
-    console.log("ADDRESS 👉", data);
-    navigate("/payment");
+  /* ========================
+      CREATE ORDER API
+  ======================== */
+
+  const onSubmit = async (data: AddressForm) => {
+    try {
+      const payload = {
+        items: items.map((item) => ({
+          product: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+
+        shippingAddress: {
+          name: data.fullName,
+          phone: data.phone,
+          address: data.address,
+          city: data.city,
+          pincode: data.pincode,
+        },
+
+        totalAmount: total,
+      };
+
+      const res = await api.post("/orders", payload);
+
+      toast.success("Order created successfully");
+
+      // 🔥 Redirect to payment with orderId
+      navigate("/payment", {
+        state: { orderId: res.data.orderId },
+      });
+    } catch (error) {
+      toast.error("Failed to create order");
+    }
   };
 
   return (
@@ -57,7 +92,9 @@ export default function Checkout() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <input
-            {...register("fullName", { required: "Full name is required" })}
+            {...register("fullName", {
+              required: "Full name is required",
+            })}
             placeholder="Full Name"
             className="w-full border px-3 py-2 rounded"
           />
@@ -68,7 +105,10 @@ export default function Checkout() {
           <input
             {...register("phone", {
               required: "Phone number is required",
-              minLength: { value: 10, message: "Invalid phone number" },
+              minLength: {
+                value: 10,
+                message: "Invalid phone number",
+              },
             })}
             placeholder="Phone Number"
             className="w-full border px-3 py-2 rounded"
@@ -78,7 +118,9 @@ export default function Checkout() {
           )}
 
           <textarea
-            {...register("address", { required: "Address is required" })}
+            {...register("address", {
+              required: "Address is required",
+            })}
             placeholder="Full Address"
             className="w-full border px-3 py-2 rounded"
           />
@@ -88,14 +130,20 @@ export default function Checkout() {
 
           <div className="grid grid-cols-2 gap-3">
             <input
-              {...register("city", { required: "City is required" })}
+              {...register("city", {
+                required: "City is required",
+              })}
               placeholder="City"
               className="w-full border px-3 py-2 rounded"
             />
+
             <input
               {...register("pincode", {
                 required: "Pincode is required",
-                minLength: { value: 6, message: "Invalid pincode" },
+                minLength: {
+                  value: 6,
+                  message: "Invalid pincode",
+                },
               })}
               placeholder="Pincode"
               className="w-full border px-3 py-2 rounded"
@@ -103,10 +151,14 @@ export default function Checkout() {
           </div>
 
           <button
+            disabled={isSubmitting}
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700"
+            className={`w-full py-3 rounded text-white
+              ${
+                isSubmitting ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+              }`}
           >
-            Continue to Payment
+            {isSubmitting ? "Creating Order..." : "Continue to Payment"}
           </button>
         </form>
       </div>
