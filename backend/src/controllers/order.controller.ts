@@ -39,19 +39,18 @@ export const createOrder = async (req: Request, res: Response) => {
 /* ================================
    GET LOGGED-IN USER ORDERS 🔥
 ================================ */
+
 export const getMyOrders = async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const orders = await Order.find({ user: req.user.id }).sort({
-      createdAt: -1,
-    });
+    const orders = await Order.find({
+      user: req.user!.id,
+    }).sort({ createdAt: -1 });
 
     res.json(orders);
-  } catch {
-    res.status(500).json({ message: "Failed to fetch orders" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch orders",
+    });
   }
 };
 
