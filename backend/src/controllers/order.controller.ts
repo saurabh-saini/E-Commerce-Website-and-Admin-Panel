@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import { Request, Response } from "express";
 import Order from "../models/Order";
+import Product from "../models/Product";
 
 /* ================================
    CREATE ORDER (already done ✅)
@@ -90,21 +91,15 @@ export const getOrderById = async (req: Request, res: Response) => {
 /* ===============================
    PAY ORDER (Payment Success)
 ================================ */
+
 export const payOrder = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid order id" });
-    }
-
-    const order = await Order.findById(id);
+    const order = await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // 🔐 Security: only owner can pay
     if (order.user.toString() !== req.user!.id.toString()) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -113,16 +108,56 @@ export const payOrder = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Order already paid" });
     }
 
+    // 🔥 STOCK REDUCE
+    for (const item of order.items) {
+      const product = await Product.findById(item.product);
+
+      if (!product) {
+        return res.status(404).json({
+          message: `Product not found: ${item.name}`,
+        });
+      }
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({
+          message: `Insufficient stock for ${product.name}`,
+        });
+      }
+
+      product.stock -= item.quantity;
+      await product.save();
+    }
+
     order.paymentStatus = "paid";
     order.paidAt = new Date();
 
     await order.save();
 
-    res.json({
-      message: "Payment successful",
-      order,
-    });
+    res.json({ message: "Payment successful", order });
   } catch (error) {
-    res.status(500).json({ message: "Payment update failed" });
+    res.status(500).json({ message: "Payment failed" });
   }
+};
+
+export const cancelOrder = async (req: Request, res: Response) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  if (order.user.toString() !== req.user!.id.toString()) {
+    return res.status(403).json({ message: "Unauthorized" });
+  }
+
+  if (order.orderStatus !== "placed") {
+    return res.status(400).json({
+      message: "Order cannot be cancelled now",
+    });
+  }
+
+  order.orderStatus = "cancelled";
+  await order.save();
+
+  res.json({ message: "Order cancelled successfully" });
 };

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getAdminStats,
   getAllOrders,
   updateOrderStatus,
 } from "../controllers/admin.order.controller";
@@ -15,5 +16,7 @@ router.put(
   adminMiddleware,
   updateOrderStatus
 );
+
+router.get("/stats", authMiddleware, adminMiddleware, getAdminStats);
 
 export default router;

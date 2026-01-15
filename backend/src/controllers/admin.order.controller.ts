@@ -38,3 +38,25 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     order,
   });
 };
+
+export const getAdminStats = async (_req: Request, res: Response) => {
+  const totalOrders = await Order.countDocuments();
+
+  const paidOrders = await Order.find({ paymentStatus: "paid" });
+
+  const totalRevenue = paidOrders.reduce(
+    (sum, order) => sum + order.totalAmount,
+    0
+  );
+
+  const pendingOrders = await Order.countDocuments({
+    paymentStatus: "pending",
+  });
+
+  res.json({
+    totalOrders,
+    paidOrders: paidOrders.length,
+    pendingOrders,
+    totalRevenue,
+  });
+};
