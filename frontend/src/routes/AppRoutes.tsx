@@ -28,6 +28,12 @@ const Cart = lazy(() => import("../pages/Cart"));
 const Checkout = lazy(() => import("../pages/Checkout"));
 const Payment = lazy(() => import("../pages/payment/Payment"));
 
+// Admin
+const AdminLogin = lazy(() => import("../admin/AdminLogin"));
+const AdminDashboard = lazy(() => import("../admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("../admin/AdminProducts"));
+const AdminOrders = lazy(() => import("../admin/AdminOrders"));
+
 /* =====================
    Routes
 ===================== */
@@ -63,6 +69,12 @@ export default function AppRoutes() {
           <Route path="/order-success/:id" element={<OrderSuccess />} />
         </Route>
       </Route>
+
+      {/* admin  */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/products" element={<AdminProducts />} />
+      <Route path="/admin/orders" element={<AdminOrders />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" replace />} />
