@@ -40,13 +40,28 @@ export const createOrder = async (req: Request, res: Response) => {
    GET LOGGED-IN USER ORDERS 🔥
 ================================ */
 
-export const getMyOrders = async (req: Request, res: Response) => {
+export const getMyOrders = async (req: any, res: any) => {
   try {
-    const orders = await Order.find({
-      user: req.user!.id,
-    }).sort({ createdAt: -1 });
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
 
-    res.json(orders);
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments({
+      user: req.user.id,
+    });
+
+    const orders = await Order.find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      orders,
+      totalOrders,
+      currentPage: page,
+      totalPages: Math.ceil(totalOrders / limit),
+    });
   } catch (error) {
     res.status(500).json({
       message: "Failed to fetch orders",
